@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const chalk = require("chalk");
 const path = require("path");
 
-require("dotenv").config({ path: `.env.${process.env.NODE_ENV}` });
+require("dotenv").config({ path: `.env` });
 
 const app = express();
 const port = process.env.PORT;
@@ -18,7 +18,9 @@ mongoose.connect(uri);
 const connection = mongoose.connection;
 connection.once("open", () => {
   console.log(
-    chalk.white.bgGreen("MongoDB database connection established successfully!")
+    chalk.white.bgGreen(
+      "MongoDB database connection established successfully!",
+    ),
   );
 });
 
@@ -35,7 +37,7 @@ app.listen(port, () => {
       "Server running on port " +
         port +
         "\nThe NODE_ENV is " +
-        process.env.NODE_ENV
-    )
+        process.env.NODE_ENV,
+    ),
   );
 });

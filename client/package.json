@@ -10,7 +10,7 @@
     "@mui/lab": "^5.0.0-alpha.84",
     "@mui/material": "^5.8.2",
     "@mui/styles": "^5.8.0",
-    "axios": "^0.27.2",
+    "axios": "^1.11.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-redux": "^8.0.2",
@@ -46,6 +46,6 @@
   },
   "proxy": "https://my-scratch-book.herokuapp.com/api/",
   "devDependencies": {
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^0.0.0"
   }
 }
