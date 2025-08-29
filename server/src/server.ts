@@ -1,44 +1,37 @@
-import express, {
-  type NextFunction,
-  type Request,
-  type Response,
-} from "express";
+import type { NextFunction, Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import chalk from "chalk";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { str, cleanEnv, port } from "envalid";
 
-import notesRouter from "./routes/notes.js";
-import usersRouter from "./routes/users.js";
-import authRouter from "./routes/auth.js";
+import env from "./config/env.ts";
 
-const DEFAULT_PORT = 5000;
+import notesRouter from "./routes/notes.ts";
+import usersRouter from "./routes/users.ts";
+import authRouter from "./routes/auth.ts";
+import { ApiError } from "./errors/ApiError.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const env = cleanEnv(process.env, {
-  PORT: port({ default: DEFAULT_PORT }),
-  CLIENT_URL: str(),
-  JWT_SECRET: str(),
-  ATLAS_URI: str(),
-  NODE_ENV: str({
-    default: "development",
-    choices: ["development", "production", "test"],
-  }),
-});
-
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   console.log(chalk.yellow("SIGTERM received. Shutting down gracefully..."));
-  mongoose.connection
-    .close(false)
-    .then(() => console.log(chalk.yellow("✓ MongoDB connection closed!")));
+  server.close(() => {
+    console.log(chalk.yellow("✓ HTTP server closed"));
+  });
+
+  await mongoose.connection.close(false);
+  console.log(chalk.yellow("✓ MongoDB connection closed!"));
+  process.exit(0);
 });
 
 process.on("SIGINT", () => {
   console.log(chalk.yellow("\nSIGINT received. Shutting down..."));
+  server.close(() => {
+    console.log(chalk.yellow("✓ HTTP server closed"));
+  });
   process.exit(0);
 });
 
@@ -65,14 +58,22 @@ app.use("/api/auth", authRouter);
 
 if (env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../client/build")));
-  app.get("*", (req, res) =>
+  app.get("*", (_, res) =>
     res.sendFile(path.resolve(__dirname, "../client/build", "index.html")),
   );
 }
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something broke!" });
+app.use((err: any, _: Request, res: Response, __: NextFunction) => {
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({ message: err.message });
+  }
+
+  console.error("Uncaught exception:", err.stack || err);
+
+  const message =
+    env.NODE_ENV === "development" ? err.message : "Internal server error";
+
+  res.status(500).json({ message });
 });
 
 const server = app.listen(env.PORT, () => {
