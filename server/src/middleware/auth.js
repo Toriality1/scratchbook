@@ -1,18 +1,17 @@
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
-require("dotenv").config();
+dotenv.config();
 
 function auth(req, res, next) {
   const token = req.header("x-auth-token");
 
-  // Check for token
-  if (!token)
+  if (!token) {
     return res.status(401).json({ msg: "Unauthorized access - No token." });
+  }
 
   try {
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Add user from paylaod
     req.user = decoded;
     next();
   } catch (e) {
@@ -20,4 +19,4 @@ function auth(req, res, next) {
   }
 }
 
-module.exports = auth;
+export default auth;

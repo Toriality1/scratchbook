@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose";
+const { Schema, model } = mongoose;
 
 const usersSchema = new Schema(
   {
@@ -15,6 +15,7 @@ const usersSchema = new Schema(
     },
     notes: {
       type: [Schema.Types.ObjectId],
+      default: [],
     },
   },
   {
@@ -22,6 +23,6 @@ const usersSchema = new Schema(
   }
 );
 
-const Users = mongoose.model("Users", usersSchema);
+const Users = model("Users", usersSchema);
+export default Users;
 
-module.exports = Users;

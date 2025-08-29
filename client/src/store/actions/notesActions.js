@@ -3,10 +3,12 @@ import axios from "axios";
 
 import { tokenConfig } from "./usersActions";
 
+const apiUrl = import.meta.env.VITE_API_URL;
+
 // Get notes from the database
 export const getNotes = () => async (dispatch) => {
   try {
-    const res = await axios.get(process.env.REACT_APP_URL + "notes");
+    const res = await axios.get(apiUrl + "notes");
     dispatch({
       type: type.GET_NOTES,
       payload: res.data,
@@ -22,7 +24,7 @@ export const getNotes = () => async (dispatch) => {
 // View a specific note
 export const viewNote = (id) => async (dispatch) => {
   try {
-    const res = await axios.get(process.env.REACT_APP_URL + `notes/id/${id}`);
+    const res = await axios.get(apiUrl + `notes/id/${id}`);
     dispatch({
       type: type.VIEW_NOTE,
       payload: res.data,
@@ -38,11 +40,7 @@ export const viewNote = (id) => async (dispatch) => {
 // Create a new note and post it into the database
 export const postNote = (note) => async (dispatch, getState) => {
   try {
-    const res = await axios.post(
-      process.env.REACT_APP_URL + "notes",
-      note,
-      tokenConfig(getState)
-    );
+    const res = await axios.post(apiUrl + "notes", note, tokenConfig(getState));
     dispatch({
       type: type.POST_NOTE,
       payload: res.data,
@@ -59,10 +57,7 @@ export const postNote = (note) => async (dispatch, getState) => {
 // Delete note
 export const deleteNote = (id) => async (dispatch, getState) => {
   try {
-    await axios.delete(
-      process.env.REACT_APP_URL + `notes/id/${id}`,
-      tokenConfig(getState)
-    );
+    await axios.delete(apiUrl + `notes/id/${id}`, tokenConfig(getState));
     dispatch({
       type: type.DELETE_NOTE,
     });

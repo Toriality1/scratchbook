@@ -1,21 +1,19 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose from "mongoose";
+const { Schema, model } = mongoose;
 
 const notesSchema = new Schema(
   {
     title: {
       type: String,
       required: true,
-      unique: false,
       trim: true,
-      minlenght: 3,
+      minlength: 3,
     },
     desc: {
       type: String,
       required: true,
-      unique: false,
-      minlenght: 3,
-      maxlenght: 1024,
+      minlength: 3,
+      maxlength: 1024,
     },
     private: {
       type: Boolean,
@@ -28,9 +26,8 @@ const notesSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const Note = mongoose.model("Note", notesSchema);
-
-module.exports = Note;
+const Note = model("Note", notesSchema);
+export default Note;

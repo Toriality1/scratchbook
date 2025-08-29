@@ -1,13 +1,15 @@
 import axios from "axios";
 import * as type from "../types/usersTypes";
 
+const apiUrl = import.meta.env.VITE_API_URL;
+
 // Check token and load user
 export const loadUser = () => (dispatch, getState) => {
   // User loading
   dispatch({ type: type.USER_LOADING });
 
   axios
-    .get(process.env.REACT_APP_URL + "auth", tokenConfig(getState))
+    .get(apiUrl + "auth", tokenConfig(getState))
     .then((res) => {
       dispatch({
         type: type.USER_LOADED,
@@ -36,7 +38,7 @@ export const register =
     const body = JSON.stringify({ username, password });
 
     axios
-      .post(process.env.REACT_APP_URL + "users", body, config)
+      .post(apiUrl + "users", body, config)
       .then((res) => {
         dispatch({
           type: type.REGISTER_SUCCESS,
@@ -65,7 +67,7 @@ export const login =
     const body = JSON.stringify({ username, password });
 
     axios
-      .post(process.env.REACT_APP_URL + "auth", body, config)
+      .post(apiUrl + "auth", body, config)
       .then((res) => {
         dispatch({
           type: type.LOGIN_SUCCESS,
