@@ -9,7 +9,7 @@ const baseOptions = {
 const devLogger = pino({
   ...baseOptions,
   transport: {
-    target: "pino-pretty",
+    target: "pino",
     options: {
       colorize: true,
       levelFirst: false,
