@@ -18,9 +18,9 @@ connectDB();
 const app = express();
 
 if (env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "client")));
+  app.use(express.static(path.join(__dirname, "public")));
   app.get(/^(?!\/api).*/i, (_req, res) => {
-    res.sendFile(path.join(__dirname, "client", "index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
   });
 }
 
@@ -31,8 +31,8 @@ app.use("/api/notes", notesRouter);
 app.use("/api/users", usersRouter);
 app.use(handleError);
 
-const server = app.listen(env.PORT, () => {
+app.listen(env.PORT, () => {
   logger.info(`Server is running in ${env.NODE_ENV} mode on port ${env.PORT}`);
 });
 
-export default server;
+// export default server;
