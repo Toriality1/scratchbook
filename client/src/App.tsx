@@ -4,8 +4,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import theme from "./styles/styles";
 
-import { AuthProvider } from "./context/AuthContext";
-import { NotesProvider } from "./context/NotesContext";
+import { UserProvider } from "./features/user/UserProvider";
+import { NotesProvider } from "./features/note/NoteProvider";
 
 import Home from "./components/Home";
 import ViewNote from "./components/ViewNote";
@@ -14,7 +14,7 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
+      <UserProvider>
         <NotesProvider>
           <BrowserRouter>
             <Routes>
@@ -23,7 +23,7 @@ export default function App() {
             </Routes>
           </BrowserRouter>
         </NotesProvider>
-      </AuthProvider>
+      </UserProvider>
     </ThemeProvider>
   );
 }

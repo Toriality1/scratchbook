@@ -1,12 +1,12 @@
+import logger from "../utils/logger.js";
 import { z } from "zod";
 import { ApiError } from "../errors/ApiError.js";
 import { Router } from "express";
-import type { Request, Response } from "express";
-import { Schema, model, Types } from "mongoose";
+import mongoose, { Schema, model, Types } from "mongoose";
 import { auth } from "./user.js";
 import { validate } from "../middleware/validate.js";
 import { INTERNAL_SERVER_ERROR } from "../utils/constants.js";
-import logger from "../utils/logger.js";
+import type { Request, Response } from "express";
 
 // ----------------------------------------- \\
 // Constants
@@ -28,14 +28,14 @@ const ERROR_UNAUTHORIZED = "You are not authorized to view this note";
 // ----------------------------------------- \\
 // Types
 // ----------------------------------------- \\
-export interface CreateNoteData {
+interface CreateNoteData {
   title: string;
   desc: string;
   private: boolean;
   userId?: string;
 }
 
-export interface UpdateNoteData {
+interface UpdateNoteData {
   title?: string;
   desc?: string;
   private?: boolean;
@@ -50,17 +50,10 @@ export interface INote extends Document {
   updatedAt: Date;
 }
 
-export interface PopulatedNote extends Omit<INote, "user"> {
-  user: {
-    _id: string;
-    username: string;
-  };
-}
-
 // ----------------------------------------- \\
 // Errors
 // ----------------------------------------- \\
-export class NoteError extends ApiError {
+class NoteError extends ApiError {
   constructor(message: string, statusCode: number = 400) {
     super(statusCode, message);
   }
@@ -105,7 +98,7 @@ export const Note = model<INote>("Note", noteSchema);
 // ----------------------------------------- \\
 // Services
 // ----------------------------------------- \\
-export const createNote = async ({
+const createNote = async ({
   title,
   desc,
   private: isPrivate,
@@ -116,20 +109,20 @@ export const createNote = async ({
   return await savedNote.populate("user", "_id username");
 };
 
-export const getNoteById = async (id: string, userId?: string) => {
+const getNoteById = async (id: string, userId?: string) => {
   const note = await Note.findById(id).populate("user", "_id username");
   if (!note) {
     throw new NoteError(ERROR_NOT_FOUND, 404);
   }
 
-  if (!note.private || (note.user && note.user.toString() === userId)) {
+  if (!note.private || (note.user && note.user._id.toString() === userId)) {
     return note;
   } else {
     throw new NoteError(ERROR_UNAUTHORIZED, 403);
   }
 };
 
-export const updateNote = async (
+const updateNote = async (
   id: string,
   userId: string | undefined,
   data: UpdateNoteData,
@@ -149,7 +142,7 @@ export const updateNote = async (
   }).populate("user", "_id username");
 };
 
-export const deleteNote = async (id: string, userId?: string) => {
+const deleteNote = async (id: string, userId?: string) => {
   const note = await Note.findById(id);
   if (!note) {
     throw new NoteError(ERROR_NOT_FOUND, 404);
@@ -159,23 +152,32 @@ export const deleteNote = async (id: string, userId?: string) => {
     throw new NoteError(ERROR_UNAUTHORIZED, 403);
   }
 
-  await note.deleteOne();
+  return await note.deleteOne();
 };
 
-export const getPublicNotes = async () => {
-  return await Note.find({ private: false })
+const getNotes = async (userId: string | undefined) => {
+  const condition = userId
+    ? {
+        $or: [{ private: false }, { private: true, user: userId }],
+      }
+    : { private: false };
+
+  const notes = await Note.find(condition)
     .populate("user", "_id username")
     .sort({ createdAt: -1 });
+
+  return notes;
 };
 
 // ----------------------------------------- \\
 // Controllers
 // ----------------------------------------- \\
-export const get = async (req: Request, res: Response) => {
+const get = async (req: Request, res: Response) => {
   try {
-    const notes = await getPublicNotes();
-    res.json(notes);
-    logger.debug({ notes: notes.length, ip: req.ip }, "Notes retrieved");
+    const user = req.user?.id;
+    const notes = await getNotes(user);
+    res.json({ notes });
+    logger.debug("Notes retrieved");
   } catch (err) {
     if (err instanceof NoteError) {
       logger.debug({ error: err.message }, "Failed to get notes");
@@ -186,12 +188,25 @@ export const get = async (req: Request, res: Response) => {
   }
 };
 
-export const create = async (req: Request, res: Response) => {
+const create = async (req: Request, res: Response) => {
   try {
     const note = await createNote({ ...req.body, userId: req.user?.id });
-    res.status(201).json(note);
+    res.status(201).json({ note });
     logger.debug({ note, ip: req.ip }, "Note created");
   } catch (err) {
+    if (err instanceof mongoose.Error.ValidationError) {
+      logger.debug({ ip: req.ip, error: err.message }, "Failed to create note");
+      let msg = "";
+      let nOfErrors: number = Object.keys(err.errors).length;
+      if (nOfErrors > 1) {
+        for (const e of Object.values(err.errors)) {
+          msg += e.message + "; ";
+        }
+      } else {
+        msg = Object.values(err.errors)[0].message;
+      }
+      return res.status(400).json({ msg });
+    }
     if (err instanceof NoteError) {
       logger.debug({ ip: req.ip, error: err.message }, "Failed to create note");
       return res.status(err.statusCode).json({ msg: err.message });
@@ -201,10 +216,10 @@ export const create = async (req: Request, res: Response) => {
   }
 };
 
-export const getById = async (req: Request, res: Response) => {
+const getById = async (req: Request, res: Response) => {
   try {
     const note = await getNoteById(req.params.id, req.user?.id);
-    res.json(note);
+    res.json({ note });
     logger.debug({ note: note.id, ip: req.ip }, "Note retrieved");
   } catch (err) {
     if (err instanceof NoteError) {
@@ -216,10 +231,10 @@ export const getById = async (req: Request, res: Response) => {
   }
 };
 
-export const update = async (req: Request, res: Response) => {
+const update = async (req: Request, res: Response) => {
   try {
     const note = await updateNote(req.params.id, req.user?.id, req.body);
-    res.json(note);
+    res.json({ note });
     logger.debug({ note, ip: req.ip }, "Note updated");
   } catch (err) {
     if (err instanceof NoteError) {
@@ -231,7 +246,7 @@ export const update = async (req: Request, res: Response) => {
   }
 };
 
-export const del = async (req: Request, res: Response) => {
+const del = async (req: Request, res: Response) => {
   try {
     await deleteNote(req.params.id, req.user?.id);
     res.sendStatus(204);
@@ -246,45 +261,44 @@ export const del = async (req: Request, res: Response) => {
   }
 };
 
-// ----------------------------------------- \\
-// Validators
-// ----------------------------------------- \\
-export const createNoteSchema = z.object({
-  title: z
-    .string()
-    .min(TITLE_MIN_LENGTH, { message: TITLE_MIN_LENGTH_MSG })
-    .max(TITLE_MAX_LENGTH, { message: TITLE_MAX_LENGTH_MSG }),
-  desc: z
-    .string()
-    .min(DESCRIPTION_MIN_LENGTH, { message: DESCRIPTION_MIN_LENGTH_MSG })
-    .max(DESCRIPTION_MAX_LENGTH, { message: DESCRIPTION_MAX_LENGTH_MSG }),
-  private: z.boolean().default(false),
-});
-
-export const updateNoteSchema = z.object({
-  title: z
-    .string()
-    .min(TITLE_MIN_LENGTH, { message: TITLE_MIN_LENGTH_MSG })
-    .max(TITLE_MAX_LENGTH, { message: TITLE_MAX_LENGTH_MSG })
-    .optional(),
-  desc: z
-    .string()
-    .min(DESCRIPTION_MIN_LENGTH, { message: DESCRIPTION_MIN_LENGTH_MSG })
-    .max(DESCRIPTION_MAX_LENGTH, { message: DESCRIPTION_MAX_LENGTH_MSG })
-    .optional(),
-  private: z.boolean().optional(),
-});
+// // ----------------------------------------- \\
+// // Validators
+// // ----------------------------------------- \\
+// const createNoteSchema = z.object({
+//   title: z
+//     .string()
+//     .min(TITLE_MIN_LENGTH, { message: TITLE_MIN_LENGTH_MSG })
+//     .max(TITLE_MAX_LENGTH, { message: TITLE_MAX_LENGTH_MSG }),
+//   desc: z
+//     .string()
+//     .min(DESCRIPTION_MIN_LENGTH, { message: DESCRIPTION_MIN_LENGTH_MSG })
+//     .max(DESCRIPTION_MAX_LENGTH, { message: DESCRIPTION_MAX_LENGTH_MSG }),
+//   private: z.boolean().default(false),
+// });
+//
+// const updateNoteSchema = z.object({
+//   title: z
+//     .string()
+//     .min(TITLE_MIN_LENGTH, { message: TITLE_MIN_LENGTH_MSG })
+//     .max(TITLE_MAX_LENGTH, { message: TITLE_MAX_LENGTH_MSG })
+//     .optional(),
+//   desc: z
+//     .string()
+//     .min(DESCRIPTION_MIN_LENGTH, { message: DESCRIPTION_MIN_LENGTH_MSG })
+//     .max(DESCRIPTION_MAX_LENGTH, { message: DESCRIPTION_MAX_LENGTH_MSG })
+//     .optional(),
+//   private: z.boolean().optional(),
+// });
 
 // ----------------------------------------- \\
 // Routes
 // ----------------------------------------- \\
 const router = Router();
 
-router.get("/", get);
-router.post("/", validate(createNoteSchema), create);
-
+router.get("/", auth, get);
+router.post("/", auth, create);
 router.get("/:id", auth, getById);
-router.patch("/:id", auth, validate(updateNoteSchema), update);
+router.patch("/:id", auth, update);
 router.delete("/:id", auth, del);
 
 export default router;

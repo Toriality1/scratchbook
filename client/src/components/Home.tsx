@@ -1,18 +1,47 @@
 import CreateNote from "./PostNote";
 import NotesList from "./NotesList";
-import { Grid } from "@mui/material";
+import { Box, Grid } from "@mui/material";
 import Layout from "./Layout";
 
 export default function Home() {
   return (
     <Layout>
-      <Grid sx={{ flex: "1" }} container spacing={2}>
-        <Grid size={7}>
+      <Grid
+        container
+        direction={{
+          xs: "column",
+          md: "row",
+        }}
+        sx={{
+          flex: "1",
+          display: "flex",
+          minHeight: 0,
+          height: "100%",
+        }}
+      >
+        <Box
+          sx={{
+            overflowY: "scroll",
+            scrollbarWidth: "none",
+            maxHeight: {
+              xs: "60vh",
+              md: "90vh",
+            },
+            p: {
+              xs: 1,
+              md: 2,
+            },
+            width: {
+              xs: "100%",
+              md: "60%",
+            },
+          }}
+        >
           <NotesList />
-        </Grid>
-        <Grid size={5}>
+        </Box>
+        <Box sx={{ display: "flex", flex: "1" }}>
           <CreateNote />
-        </Grid>
+        </Box>
       </Grid>
     </Layout>
   );

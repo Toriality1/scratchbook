@@ -11,13 +11,13 @@ import {
   Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import { useAuth } from "../context/AuthContext";
+import { useUser } from "../features/user/UserContext";
 import LoginModal from "./Auth/LoginModal";
 import Logout from "./Auth/Logout";
 import RegisterModal from "./Auth/RegisterModal";
 
 export default function Navbar() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {

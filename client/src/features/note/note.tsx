@@ -7,28 +7,6 @@ import {
 } from "react";
 import { useAuth } from "./AuthContext";
 
-export type Note = {
-  _id: string;
-  title: string;
-  desc: string;
-  user: {
-      _id: string;
-      username: string
-  };
-  private: boolean;
-};
-
-type NotesContextType = {
-  notes: Note[];
-  addNote: (note: Omit<Note, "_id">) => Promise<void>;
-  deleteNote: (id: string) => Promise<void>;
-  getNoteById: (id: string) => Note | undefined;
-  loading: boolean;
-};
-
-const NotesContext = createContext<NotesContextType | undefined>(undefined);
-const ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
-
 export function NotesProvider({ children }: { children: ReactNode }) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +16,9 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     const fetchNotes = async () => {
       try {
         setLoading(true);
-        const res = await fetch(ENDPOINT + "notes");
+        const res = await fetch(ENDPOINT + "notes", {
+          credentials: "include",
+        });
         if (!res.ok) throw new Error("Failed to fetch notes");
         const data: Note[] = await res.json();
         setNotes(data);
@@ -92,8 +72,3 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useNotes(): NotesContextType {
-  const context = useContext(NotesContext);
-  if (!context) throw new Error("useNotes must be used within NotesProvider");
-  return context;
-}

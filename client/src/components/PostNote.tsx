@@ -1,17 +1,14 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import {
   Grid,
-  Box,
   Checkbox,
   FormControlLabel,
   Button,
   TextField,
-  FormGroup,
-  FormControl,
   Card,
 } from "@mui/material";
-import { useNotes } from "../context/NotesContext";
-import type { Note } from "../context/NotesContext";
+import { useNotes } from "../features/note/NoteContext";
+import type { Note } from "../features/note/note.types";
 
 export default function PostNote() {
   const { addNote } = useNotes();
@@ -49,16 +46,15 @@ export default function PostNote() {
       component={"form"}
       onSubmit={onSubmit}
       sx={{
+        flex: "1",
         bgcolor: "#eee",
         p: 4,
         display: "flex",
         gap: 2,
         flexDirection: "column",
-        flex: "1",
-        height: "100%",
         "& .MuiTextField-root": {
-            bgcolor: "white"
-        }
+          bgcolor: "white",
+        },
       }}
     >
       <TextField

@@ -2,23 +2,24 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Typography, CircularProgress, Container } from "@mui/material";
 import Layout from "./Layout";
-
-import { useNotes, type Note } from "../context/NotesContext";
-import { useAuth } from "../context/AuthContext";
+import { useNotes } from "../features/note/NoteContext";
+import { useUser } from "../features/user/UserContext";
+import type { Note } from "../features/note/note.types";
 
 export default function ViewNote() {
   const { id } = useParams();
   const { getNoteById, deleteNote } = useNotes();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, userId } = useUser();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      const n = getNoteById(id);
+    const fetchNote = async () => {
+      const n = await getNoteById(id ?? "");
       setNote(n ?? null);
       setLoading(false);
-    }
+    };
+    fetchNote();
   }, [id, getNoteById]);
 
   const handleDelete = () => {
@@ -43,7 +44,7 @@ export default function ViewNote() {
         </Typography>
         <Typography>{note.desc}</Typography>
 
-        {isAuthenticated && note.user === "currentUser" && (
+        {isAuthenticated && note.user?._id === userId && (
           <Link to="/" onClick={handleDelete}>
             <Typography
               variant="body2"

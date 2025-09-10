@@ -1,8 +1,8 @@
 import { Button } from "@mui/material";
-import { useAuth } from "../../context/AuthContext";
+import { useUser } from "../../features/user/UserContext";
 
 export default function Logout() {
-  const { logout } = useAuth();
+  const { logout } = useUser();
 
   return (
     <Button variant="contained" onClick={logout}>

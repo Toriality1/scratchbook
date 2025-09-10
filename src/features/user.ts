@@ -1,19 +1,15 @@
 import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
-import { ApiError } from "../errors/ApiError.js";
-import { z } from "zod";
-import { validate } from "../middleware/validate.js";
-import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import env from "../config/env.js";
-import {
-  type Request,
-  type Response,
-  type NextFunction,
-  Router,
-} from "express";
-import { INTERNAL_SERVER_ERROR } from "../utils/constants.js";
 import logger from "../utils/logger.js";
+import { ApiError } from "../errors/ApiError.js";
+// import { z } from "zod";
+// import { validate } from "../middleware/validate.js";
+import { Schema, model } from "mongoose";
+import { Router } from "express";
+import { INTERNAL_SERVER_ERROR } from "../utils/constants.js";
+import type { Request, Response, NextFunction } from "express";
 
 // ----------------------------------------- \\
 // Constants
@@ -33,18 +29,18 @@ const MAX_USERNAME_LENGTH_MSG = `Username is too long. Maxiumum length is ${MAX_
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_PASSWORD_LENGTH_MSG = `Password is too long. Maxiumum length is ${MAX_PASSWORD_LENGTH} characters`;
 const USERNAME_UNIQUE = "Username already exists";
-export const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/;
-export const USERNAME_REQUIRED = "Username is required";
+const USERNAME_REGEX = /^[a-zA-Z0-9_]+$/;
+const USERNAME_REQUIRED = "Username is required";
 const PASSWORD_REQUIRED = "Password is required";
-export const MIN_USERNAME_ERROR = "Username must be at least 3 characters";
-export const MIN_PASSWORD_ERROR = "Password must be at least 8 characters";
-export const USERNAME_REGEX_ERROR =
+const MIN_USERNAME_ERROR = "Username must be at least 3 characters";
+const MIN_PASSWORD_ERROR = "Password must be at least 8 characters";
+const USERNAME_REGEX_ERROR =
   "Username can only contain letters, numbers, and underscores";
-export const MAX_PASSWORD_ERROR =
+const MAX_PASSWORD_ERROR =
   "Password is too long. Maxiumum length is 128 characters";
-export const MAX_USERNAME_ERROR =
+const MAX_USERNAME_ERROR =
   "Username is too long. Maxiumum length is 10 characters";
-export const INVALID_CREDENTIALS = "Invalid credentials";
+const INVALID_CREDENTIALS = "Invalid credentials";
 const NO_TOKEN_ERROR = "Unauthorized: No token in request";
 const INVALID_TOKEN_ERROR = "Unauthorized: Invalid token";
 
@@ -86,13 +82,13 @@ interface AuthResult {
 // ----------------------------------------- \\
 // Errors
 // ----------------------------------------- \\
-export class AuthError extends ApiError {
+class AuthError extends ApiError {
   constructor(message = INVALID_CREDENTIALS) {
     super(400, message);
   }
 }
 
-export class RegistrationError extends ApiError {
+class RegistrationError extends ApiError {
   constructor(message = INVALID_CREDENTIALS) {
     super(400, message);
   }
@@ -113,12 +109,12 @@ const authLimiter =
 // ---------------------------------------------------------- \\
 // Middleware
 // ---------------------------------------------------------- \\
-
 export function auth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.token;
 
   if (!token) {
-    return res.status(401).json({ msg: NO_TOKEN_ERROR });
+    req.user = undefined;
+    return next();
   }
 
   try {
@@ -179,7 +175,7 @@ export const User = model<IUser>("User", userSchema);
 // ----------------------------------------- \\
 // Services
 // ----------------------------------------- \\
-export const registerUser = async ({
+const registerUser = async ({
   username,
   password,
 }: UserCredentials): Promise<UserDTO> => {
@@ -198,7 +194,7 @@ export const registerUser = async ({
   };
 };
 
-export const loginUser = async ({
+const loginUser = async ({
   username,
   password,
 }: UserCredentials): Promise<AuthResult> => {
@@ -212,9 +208,13 @@ export const loginUser = async ({
     throw new AuthError();
   }
 
-  const token = jwt.sign({ id: user.id }, env.JWT_SECRET, {
-    expiresIn: EXPIRE_TIME,
-  });
+  const token = jwt.sign(
+    { id: user.id, username: user.username },
+    env.JWT_SECRET,
+    {
+      expiresIn: EXPIRE_TIME,
+    },
+  );
 
   return {
     token,
@@ -228,7 +228,7 @@ export const loginUser = async ({
 // ----------------------------------------- \\
 // Controllers
 // ----------------------------------------- \\
-export const register = async (req: Request, res: Response) => {
+const register = async (req: Request, res: Response) => {
   try {
     const user = await registerUser(req.body);
     res.status(201).json(user);
@@ -245,7 +245,7 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+const login = async (req: Request, res: Response) => {
   try {
     const result = await loginUser(req.body);
     res.cookie("token", result.token, {
@@ -265,7 +265,7 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getCurrentUser = async (req: Request, res: Response) => {
+const getCurrentUser = async (req: Request, res: Response) => {
   try {
     res.json(req.user);
   } catch (err) {
@@ -292,37 +292,36 @@ const logout = async (req: Request, res: Response) => {
 // ----------------------------------------- \\
 // Validators
 // ----------------------------------------- \\
-export const registerSchema = z.object({
-  username: z
-    .string()
-    .min(MIN_USERNAME_LENGTH, { message: MIN_USERNAME_ERROR })
-    .max(MAX_USERNAME_LENGTH, { message: MAX_USERNAME_ERROR })
-    .regex(USERNAME_REGEX, { message: USERNAME_REGEX_ERROR }),
-  password: z
-    .string()
-    .min(MIN_PASSWORD_LENGTH, { message: MIN_PASSWORD_ERROR })
-    .max(MAX_PASSWORD_LENGTH, { message: MAX_PASSWORD_ERROR }),
-});
-
-export const loginSchema = z.object({
-  username: z
-    .string()
-    .min(MIN_USERNAME_LENGTH, { message: MIN_USERNAME_ERROR })
-    .max(MAX_USERNAME_LENGTH, { message: MAX_USERNAME_ERROR }),
-  password: z
-    .string()
-    .min(MIN_PASSWORD_LENGTH, { message: MIN_PASSWORD_ERROR })
-    .max(MAX_PASSWORD_LENGTH, { message: MAX_PASSWORD_ERROR }),
-});
+// const registerSchema = z.object({
+//   username: z
+//     .string()
+//     .min(MIN_USERNAME_LENGTH, { message: MIN_USERNAME_ERROR })
+//     .max(MAX_USERNAME_LENGTH, { message: MAX_USERNAME_ERROR })
+//     .regex(USERNAME_REGEX, { message: USERNAME_REGEX_ERROR }),
+//   password: z
+//     .string()
+//     .min(MIN_PASSWORD_LENGTH, { message: MIN_PASSWORD_ERROR })
+//     .max(MAX_PASSWORD_LENGTH, { message: MAX_PASSWORD_ERROR }),
+// });
+//
+// const loginSchema = z.object({
+//   username: z
+//     .string()
+//     .min(MIN_USERNAME_LENGTH, { message: MIN_USERNAME_ERROR })
+//     .max(MAX_USERNAME_LENGTH, { message: MAX_USERNAME_ERROR }),
+//   password: z
+//     .string()
+//     .min(MIN_PASSWORD_LENGTH, { message: MIN_PASSWORD_ERROR })
+//     .max(MAX_PASSWORD_LENGTH, { message: MAX_PASSWORD_ERROR }),
+// });
 
 // ----------------------------------------- \\
 // Routes
 // ----------------------------------------- \\
 const router = Router();
 
-router.post("/", validate(registerSchema), register);
-
-router.post("/auth", authLimiter, validate(loginSchema), login);
+router.post("/", register);
+router.post("/auth", authLimiter, login);
 router.get("/auth", authLimiter, auth, getCurrentUser);
 router.get("/logout", auth, logout);
 

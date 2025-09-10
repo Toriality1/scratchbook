@@ -1,13 +1,13 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Button, Modal, Box, Typography, TextField } from "@mui/material";
 
-import { useAuth } from "../../context/AuthContext";
+import { useUser } from "../../features/user/UserContext";
 
 // simple regex to disallow special chars in username
 const forbiddenChars = /[ `!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/;
 
 export default function RegisterModal() {
-  const { register } = useAuth();
+  const { register } = useUser();
 
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");

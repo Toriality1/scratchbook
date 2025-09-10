@@ -14,6 +14,7 @@
   "dependencies": {
     "@emotion/server": "^11.11.0",
     "@mui/icons-material": "^7.3.2",
+    "@mui/lab": "^7.0.0-beta.17",
     "@types/dotenv": "^6.1.1",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",

@@ -1,10 +1,10 @@
 import { useState, type FormEvent, type ChangeEvent } from "react";
 import { Box, Modal, Button, Typography, TextField } from "@mui/material";
 
-import { useAuth } from "../../context/AuthContext";
+import { useUser } from "../../features/user/UserContext";
 
 export default function LoginModal() {
-  const { login } = useAuth();
+  const { login } = useUser();
 
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
