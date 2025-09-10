@@ -1,4 +1,4 @@
-import * as rateLimit from "express-rate-limit";
+// import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import env from "../config/env.js";
@@ -97,14 +97,14 @@ class RegistrationError extends ApiError {
 // ----------------------------------------- \\
 // Utils
 // ----------------------------------------- \\
-const authLimiter =
-  env.NODE_ENV === "production"
-    ? rateLimit.default({
-        windowMs: RATE_LIMIT_WINDOW,
-        max: RATE_LIMIT_MAX_TRIES,
-        message: RATE_LIMIT_MSG,
-      })
-    : (_req: Request, _res: Response, next: NextFunction) => next();
+const authLimiter = (_req: Request, _res: Response, next: NextFunction) => next();
+  // env.NODE_ENV === "production"
+  //   ? rateLimit({
+  //       windowMs: RATE_LIMIT_WINDOW,
+  //       max: RATE_LIMIT_MAX_TRIES,
+  //       message: RATE_LIMIT_MSG,
+  //     })
+  //   : (_req: Request, _res: Response, next: NextFunction) => next();
 
 // ---------------------------------------------------------- \\
 // Middleware
