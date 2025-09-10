@@ -320,9 +320,9 @@ const logout = async (req: Request, res: Response) => {
 // ----------------------------------------- \\
 const router = Router();
 
-router.post("/", register);
+router.post("/", authLimiter, register);
 router.post("/auth", authLimiter, login);
-router.get("/auth", authLimiter, auth, getCurrentUser);
+router.get("/auth", auth, getCurrentUser);
 router.get("/logout", auth, logout);
 
 export default router;

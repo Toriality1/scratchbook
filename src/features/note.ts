@@ -115,8 +115,10 @@ const getNoteById = async (id: string, userId?: string) => {
     throw new NoteError(ERROR_NOT_FOUND, 404);
   }
 
-  if (!note.private || (note.user && note.user._id.toString() === userId)) {
-    return note;
+  if (!note.user) return note; // private note made by guest = accessible with link
+
+  if (!note.private || note.user._id.toString() === userId) {
+    return note; // private note made by user = accessible only by user
   } else {
     throw new NoteError(ERROR_UNAUTHORIZED, 403);
   }

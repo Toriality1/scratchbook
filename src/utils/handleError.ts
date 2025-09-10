@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import logger from "./logger";
-import env from "../config/env";
-import { ApiError } from "../errors/ApiError";
+import logger from "./logger.js";
+import env from "../config/env.js";
+import { ApiError } from "../errors/ApiError.js";
 
 export default function handleError(
   err: any,

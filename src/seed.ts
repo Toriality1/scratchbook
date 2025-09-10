@@ -1,7 +1,7 @@
 import mongoose, { Types } from "mongoose";
-import env from "./config/env";
-import { User } from "./features/user";
-import { Note } from "./features/note";
+import env from "./config/env.js";
+import { User } from "./features/user.js";
+import { Note } from "./features/note.js";
 
 const MONGO_URI = env.ATLAS_URI;
 
