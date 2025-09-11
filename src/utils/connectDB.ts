@@ -44,4 +44,3 @@ export async function connectDB(): Promise<Mongoose> {
 
   return cached.conn;
 }
-
